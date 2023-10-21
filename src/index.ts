@@ -1,3 +1,4 @@
+import {del} from "superagent";
 
 const express = require('express')
 const app = express();
@@ -208,12 +209,34 @@ app.post('/save/config', async (req: Request, res: Response) => {
     })
 })
 
-app.get('/del/config', async (req: Request, res: Response) => {
-    const {id} = req.query;
-    await AppDataSource.manager.delete(Certificate,{id})
+app.post('/del/config', async (req: Request, res: Response) => {
+    const { idList } = req.body;
+    const deleteIdList = idList.map(id => {
+        return {
+            id
+        }
+    })
+    console.log(idList,deleteIdList)
+    const deleteResp = await AppDataSource.manager
+        .createQueryBuilder()
+        .delete()
+        .from(Certificate)
+        .whereInIds(deleteIdList)
+        .execute()
+
+    console.log(deleteResp)
     return res.json({
         code:0
     })
+})
+
+app.get('/config/amount', async (req: Request, res: Response) => {
+    const [certificateList, amount] = await AppDataSource.manager.findAndCount(Certificate);
+    return res.json({
+        code: 0,
+        amount
+    })
+
 })
 
 app.use((express.static(__dirname + '/static')))
